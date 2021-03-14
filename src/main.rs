@@ -23,4 +23,6 @@ fn main() {
         Err(x) => println!("\nCPU load: error: {}", x)
     }
 
+    println!("myname -- xiejinhua");
+
 }
