@@ -1,29 +1,45 @@
 extern crate http;
 extern crate systemstat;
+extern crate futures;
+extern crate hyper;
 
-use std::{collections::HashMap, fs, result, thread};
+use std::{fs, num::ParseIntError, ops::{Index, Sub}, thread, time};
 
-use http::{Request, Response, StatusCode, response};
-use reqwest::Response;
 use systemstat::{Duration, Platform, System};
 
-fn main() {
-    ball();
-    let request = Request::get("https://kaijiang.500.com/shtml/ssq/03001.shtml")
-      .body(()).unwrap();
-    let (parts, body) = request.into_parts();
-    println!("{:?}", parts.extensions);
-    Response::into_body(request);
-}
+#[cfg(not(target_arch = "wasm32"))]
+#[tokio::main]
+async fn main() -> Result<(), reqwest::Error> {
 
-// ball 获取数据
-fn ball(){
+    let var_str = "abcdefg";
+    let index = var_str.find("c").unwrap();
+    let var_str_tmp = substr(&var_str, index, 200);
+    println!("{:?}", var_str_tmp);
+
+
     let text = fs::read_to_string("D:\\a.txt").unwrap();
     let split = text.split("</a>");
     for str in split {
         let url = substr(str, 9, 46);
-        println!("{:?}", url);
+        println!("{}", &url);
+        print!("{:?}\t", substr(&url, 35, 5));
+        let body = reqwest::get(url).await?.text().await?;
+        let mut body = body.replace("\t", "").replace("\n", "")
+        .replace("\r", "").replace("/", "").replace(" ", "")
+        .replace("\"", "");
+        let index_option = body.find("ball_box01");
+        if index_option.is_none() {
+            println!("无");
+            continue;
+        }else{
+            let index = index_option.unwrap();
+            print!("{}", index);
+            body.truncate(index + 1000);
+            println!("{:?}", body);
+        }
+        break;
     }
+    Ok(())
 }
 
 // substr 截取字符串
