@@ -2,15 +2,25 @@ extern crate http;
 extern crate systemstat;
 extern crate futures;
 extern crate hyper;
+extern crate mysql;
 
-use std::{fs::{self, OpenOptions}, io::Write, num::ParseIntError, ops::{Index, Sub}, thread, time};
+use std::{fs::{self, OpenOptions}, io::Write, ptr::null, thread};
 
+use mysql::*;
+use mysql::prelude::*;
 use systemstat::{Duration, Platform, System};
 
 fn main(){
+    let opt = Opts::from_url("mysql://root:root@10.0.2.78:8289/oasisportal?");
+    let pool = Pool::new(opt.unwrap()).unwrap();
+    let mut conn = pool.get_conn().unwrap();
+    let result: Row = conn.exec_first( "select * from sq", ()).unwrap().unwrap();
+    for i in 0..result.len() {
+        println!("{:?}", result[i]);
+    }
 }
 
-async fn ball() -> Result<(), reqwest::Error> {
+async fn ball(){
     let need_char = ["a", "b", "c", "d", "e", "i",
      "l", "o", "r", "s", "u", "v", "x", "<", ">", "_", "/",
      "0","1","2","3","4","5","6","7","8","9"];
@@ -22,7 +32,7 @@ async fn ball() -> Result<(), reqwest::Error> {
     for str in split {
         let url = substr(str, 9, 46);
         let mut out = substr(&url, 35, 5);
-        let body = reqwest::get(url).await?.text().await?;
+        let body = reqwest::get(url).await.unwrap().text().await.unwrap();
         let mut result = String::new();
         let b = body.split("");
         for char_b in b {
@@ -43,7 +53,6 @@ async fn ball() -> Result<(), reqwest::Error> {
         file.write_all(out.as_bytes()).expect("write failed");
         file.write_all("\n".as_bytes()).expect("write failed");
     }
-    Ok(())
 }
 
 // substr 截取字符串
